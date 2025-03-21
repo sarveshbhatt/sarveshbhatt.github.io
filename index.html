@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-Mobile IMEI Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f8f8;
+        }
+        .container {
+            margin: 50px auto;
+            max-width: 500px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #e20074; /* T-Mobile Magenta */
+        }
+        input[type="file"] {
+            margin: 15px 0;
+        }
+        button {
+            background-color: #e20074;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #c00060;
+        }
+        #results {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>T-Mobile IMEI Checker</h1>
+        <input type="file" id="fileInput" accept=".txt">
+        <button onclick="uploadFile()">Check IMEIs</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById("fileInput");
+            if (!fileInput.files.length) {
+                alert("Please select a file.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                const imeis = e.target.result.split("\n").map(imei => imei.trim()).slice(0, 9000);
+                const response = await fetch("/api/check-imei", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ imeis })
+                });
+
+                const data = await response.json();
+                displayResults(data);
+            };
+            reader.readAsText(fileInput.files[0]);
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "<h3>Results:</h3>";
+
+            data.forEach(item => {
+                resultsDiv.innerHTML += `<p><strong>IMEI:</strong> ${item.imei} | 
+                <strong>Status:</strong> ${item.status || "Unknown"} | 
+                <strong>Carrier:</strong> ${item.carrier || "N/A"}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
